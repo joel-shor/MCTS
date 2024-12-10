@@ -130,6 +130,12 @@ class MCTS:
             else:
                 return self.expand(node)
         return node
+    
+    def all_visits(self) -> int:
+        """Returns number of visits of all nodes in the tree, including this one."""
+        if self.is_terminal:
+            return self.NumVisits
+        return sum([x.all_visits() for x in self.children.values()]) + self.numVisits
 
     def expand(self, node: TreeNode) -> TreeNode:
         actions = node.state.get_possible_actions()
