@@ -1,5 +1,12 @@
-from __future__ import division
+"""MCTS search class.
 
+To test:
+
+    python -m mcts.searcher.mcts
+
+"""
+
+from enum import Enum
 import math
 import random
 import time
@@ -35,6 +42,16 @@ class TreeNode:
         return "%s: {%s}" % (self.__class__.__name__, ', '.join(s))
 
 
+class BackpropMethod(Enum):
+    """Determines how backpropagated rewards are calculated.
+    
+    `AVERAGE` is the default: sum_all_children / num_visited
+    `MAX` uses the max child node: max_child
+    """
+    AVERAGE = 1
+    MAX = 2
+
+
 class MCTS:
     def __init__(self,
                  time_limit: int = None,
@@ -44,7 +61,8 @@ class MCTS:
                  exploration_constant: float = None,
                  explorationConstant=math.sqrt(2),
                  rollout_policy=None,
-                 rolloutPolicy=random_policy):
+                 rolloutPolicy=random_policy,
+                 backprop_method: BackpropMethod = BackpropMethod.AVERAGE):
         # backwards compatibility
         time_limit = timeLimit if time_limit is None else time_limit
         iteration_limit = iterationLimit if iteration_limit is None else iteration_limit
@@ -68,6 +86,7 @@ class MCTS:
             self.limit_type = 'iterations'
         self.exploration_constant = exploration_constant
         self.rollout_policy = rollout_policy
+        self.backprop_method = backprop_method
 
     def search(self, initialState: BaseState = None, initial_state: BaseState = None, needDetails: bool = False,
                need_details: bool = None):
@@ -86,7 +105,13 @@ class MCTS:
         best_child = self.get_best_child(self.root, 0)
         action = (action for action, node in self.root.children.items() if node is best_child).__next__()
         if need_details:
-            return action, best_child.totalReward / best_child.numVisits
+            if self.backprop_method == BackpropMethod.AVERAGE:
+                best_reward = best_child.totalReward / best_child.numVisits
+            elif self.backprop_method == BackpropMethod.MAX:
+                best_reward = best_child.totalReward
+            else:
+                raise Exception("Should never reach here")
+            return action, best_reward
         else:
             return action
 
@@ -121,7 +146,12 @@ class MCTS:
     def backpropogate(self, node: TreeNode, reward: float):
         while node is not None:
             node.numVisits += 1
-            node.totalReward += reward
+            if self.backprop_method == BackpropMethod.AVERAGE:
+                node.totalReward += reward
+            elif self.backprop_method == BackpropMethod.MAX:
+                node.totalReward += max(node.totalReward, reward)
+            else:
+                raise ValueError("Unknown backprop method: %s" % self.backprop_method)
             node = node.parent
 
     def get_best_child(self, node: TreeNode, explorationValue: float, exploration_value: float = None) -> TreeNode:
@@ -129,11 +159,22 @@ class MCTS:
         best_value = float("-inf")
         best_nodes = []
         for child in node.children.values():
-            node_value = (node.state.get_current_player() * child.totalReward / child.numVisits +
-                          exploration_value * math.sqrt(math.log(node.numVisits) / child.numVisits))
+            if self.backprop_method == BackpropMethod.AVERAGE:
+                exploit = node.state.get_current_player() * child.totalReward / child.numVisits
+            elif self.backprop_method == BackpropMethod.MAX:
+                exploit = node.state.get_current_player() * child.totalReward
+            else:
+                raise ValueError("Unknown backprop method: %s" % self.backprop_method)
+            explore = math.sqrt(math.log(node.numVisits) / child.numVisits)
+            node_value = exploit + exploration_value * explore
             if node_value > best_value:
                 best_value = node_value
                 best_nodes = [child]
             elif node_value == best_value:
                 best_nodes.append(child)
         return random.choice(best_nodes)
+
+if __name__ == '__main__':
+    # Run some simple tests.
+    MCTS(time_limit=1)
+    MCTS(time_limit=1, backprop_method=BackpropMethod.MAX)
