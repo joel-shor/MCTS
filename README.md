@@ -1,3 +1,7 @@
+# MCTS-AlphaNucleic
+
+This is cloned for a new project. Fork from [this](https://github.com/kstruempf/MCTS), which was forked from [this](https://github.com/pbsinclair42/MCTS).
+
 # MCTS
 
 This package provides a simple way of using Monte Carlo Tree Search in any perfect information domain.
