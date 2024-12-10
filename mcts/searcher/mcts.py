@@ -155,7 +155,7 @@ class MCTS:
             if self.backprop_method == BackpropMethod.AVERAGE:
                 node.totalReward += reward
             elif self.backprop_method == BackpropMethod.MAX:
-                node.totalReward += max(node.totalReward, reward)
+                node.totalReward = max(node.totalReward, reward)
             else:
                 raise ValueError("Unknown backprop method: %s" % self.backprop_method)
             node = node.parent
