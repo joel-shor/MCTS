@@ -44,7 +44,7 @@ class TreeNode:
     def all_visits(self) -> int:
         """Returns number of visits of all nodes in the tree, including this one."""
         if self.is_terminal:
-            return self.NumVisits
+            return self.numVisits
         return sum([x.all_visits() for x in self.children.values()]) + self.numVisits
 
 
