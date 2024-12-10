@@ -117,7 +117,7 @@ class MCTS:
                 best_reward = best_child.totalReward
             else:
                 raise Exception("Should never reach here")
-            return action, best_reward
+            return action, best_reward, best_child
         else:
             return action
 
