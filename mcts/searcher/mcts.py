@@ -61,20 +61,10 @@ class BackpropMethod(Enum):
 class MCTS:
     def __init__(self,
                  time_limit: int = None,
-                 timeLimit=None,
                  iteration_limit: int = None,
-                 iterationLimit=None,
-                 exploration_constant: float = None,
-                 explorationConstant=math.sqrt(2),
-                 rollout_policy=None,
-                 rolloutPolicy=random_policy,
+                 exploration_constant: float = math.sqrt(2),
+                 rollout_policy=random_policy,
                  backprop_method: BackpropMethod = BackpropMethod.AVERAGE):
-        # backwards compatibility
-        time_limit = timeLimit if time_limit is None else time_limit
-        iteration_limit = iterationLimit if iteration_limit is None else iteration_limit
-        exploration_constant = explorationConstant if exploration_constant is None else exploration_constant
-        rollout_policy = rolloutPolicy if rollout_policy is None else rollout_policy
-
         self.root = None
         if time_limit is not None:
             if iteration_limit is not None:
