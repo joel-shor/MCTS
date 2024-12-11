@@ -11,10 +11,10 @@ import math
 import random
 import time
 
-from mcts.base.base import BaseState
+from mcts.base import base
 
 
-def random_policy(state: BaseState) -> float:
+def random_policy(state: base.BaseState) -> float:
     while not state.is_terminal():
         try:
             action = random.choice(state.get_possible_actions())
@@ -59,6 +59,19 @@ class BackpropMethod(Enum):
 
 
 class MCTS:
+    """Stateful MCTS class.
+    
+    Typical usage pattern should be as follows:
+
+    ```python
+    mcts_game = MCTS()
+    mcts_game.reset_game(initial_state)
+
+    while not mcts.root.state.is_terminal():
+        action = mcts_game.search()
+        mcts_game.take_action(action)
+    ```
+    """
     def __init__(self,
                  time_limit: int = None,
                  iteration_limit: int = None,
@@ -84,11 +97,15 @@ class MCTS:
         self.rollout_policy = rollout_policy
         self.backprop_method = backprop_method
 
-    def search(self, initialState: BaseState = None, initial_state: BaseState = None, needDetails: bool = False,
-               need_details: bool = None):
-        initial_state = initialState if initial_state is None else initial_state
-        need_details = needDetails if need_details is None else need_details
+    def reset_game(self, initial_state: base.BaseState) -> None:
+        """Resets the game, starts with a state."""
         self.root = TreeNode(initial_state, None)
+
+    def search(self, need_details: bool = None):
+        if self.root is None:
+            raise ValueError(f'Game must be reset before calling search().')
+        if self.root.state is None:
+            raise ValueError(f'Game must be reset before calling search().')
 
         if self.limit_type == 'time':
             time_limit = time.time() + self.timeLimit / 1000
@@ -110,6 +127,16 @@ class MCTS:
             return action, best_reward
         else:
             return action
+        
+    def take_action(self, action: base.BaseAction) -> None:
+        """Takes an action and reuses the existing tree."""
+        action_child_dict = dict(self.root.children.items())
+        if action not in action_child_dict:
+            raise ValueError(f"Action not in possible actions: {action} vs {action_child_dict.keys()}")
+        self.root = action_child_dict[action]
+        # Kill the parent, for memory reasons.
+        del self.root.parent
+        self.root.parent = None
 
     def execute_round(self):
         """

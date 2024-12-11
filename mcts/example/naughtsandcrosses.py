@@ -1,5 +1,10 @@
-from __future__ import division
+"""A simple example.
 
+To test locally:
+```zsh
+python -m mcts.example.naughtsandcrosses
+```
+"""
 import operator
 from copy import deepcopy
 from functools import reduce
@@ -55,6 +60,9 @@ class NaughtsAndCrossesState(BaseState):
             if abs(sum(diagonal)) == 3:
                 return sum(diagonal) / 3
         return 0
+    
+    def __str__(self):
+        return str(f'{self.board[0]}\n{self.board[1]}\n{self.board[2]}')
 
 
 class Action(BaseAction):
@@ -78,7 +86,11 @@ class Action(BaseAction):
 
 if __name__ == "__main__":
     initial_state = NaughtsAndCrossesState()
-    searcher = MCTS(time_limit=1000)
-    action = searcher.search(initial_state=initial_state)
-
-    print(action)
+    mcts_game = MCTS(time_limit=1000)
+    mcts_game.reset_game(initial_state)
+    while not mcts_game.root.state.is_terminal():
+        print(str(mcts_game.root.state))
+        action = mcts_game.search()
+        mcts_game.take_action(action)
+        print(f'{action} {mcts_game.root.numVisits}')
+    print(str(mcts_game.root.state))
