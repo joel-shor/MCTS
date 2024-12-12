@@ -158,11 +158,19 @@ class MCTS:
         actions = node.state.get_possible_actions()
         for action in actions:
             if action not in node.children:
-                newNode = TreeNode(node.state.take_action(action), node)
-                node.children[action] = newNode
+                new_state = node.state.take_action(action)
+                if new_state == node.state:
+                    # This action was a noop and we need to loop to ourselves to preserve
+                    # the same node statistics we've discovered so far, instead of starting anew.
+                    # This self-loop helps accumulate knowledge over time instead of getting stuck
+                    # in noop action loops.
+                    new_node = node
+                else:
+                    new_node = TreeNode(new_state, node)
+                node.children[action] = new_node
                 if len(actions) == len(node.children):
                     node.is_fully_expanded = True
-                return newNode
+                return new_node
 
         raise Exception("Should never reach here")
 
